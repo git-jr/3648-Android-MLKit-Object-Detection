@@ -2,6 +2,8 @@ package com.alura.aifound.ui.camera
 
 import android.util.Log
 import android.util.Size
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -40,8 +42,13 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alura.aifound.data.Product
 import com.alura.aifound.extensions.dpToPx
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.objects.DetectedObject
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun CameraScreen(
     onNewProductDetected: (Product) -> Unit
@@ -50,10 +57,29 @@ fun CameraScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current.applicationContext
 
+    val options = ObjectDetectorOptions.Builder()
+        .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
+        .enableClassification()  // Optional
+        .build()
+
+    val objectDetector = remember { ObjectDetection.getClient(options) }
 
     val cameraAnalyzer = remember {
         CameraAnalyzer { imageProxy ->
             Log.d("CameraAnalyzer", "Image received: ${state.imageWidth}x${state.imageHeight}")
+            val mediaImage = imageProxy.image
+            if (mediaImage != null) {
+                val image =
+                    InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                objectDetector.process(image).addOnSuccessListener { detectedObjects: MutableList<DetectedObject> ->
+
+                }
+                // Pass image to an ML Kit Vision API
+                // ...
+            }
+
+            objectDetector.process(imageProxy)
+
             imageProxy.close()
         }
     }
