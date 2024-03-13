@@ -71,16 +71,26 @@ fun CameraScreen(
             if (mediaImage != null) {
                 val image =
                     InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
-                objectDetector.process(image).addOnSuccessListener { detectedObjects: MutableList<DetectedObject> ->
+                objectDetector.process(image)
+                    .addOnSuccessListener { detectedObjects: MutableList<DetectedObject> ->
+                        detectedObjects.firstOrNull().let { detectedObject ->
+                            detectedObject?.let {
+                                val boundingBox = detectedObject.boundingBox
+                                val labels = detectedObject.labels.map { it.text }.toString()
 
-                }
+                                viewModel.setTextMessage("$labels - $boundingBox")
+                            }
+
+                            imageProxy.close()
+                        } ?: run {
+                            imageProxy.close()
+                        }
+                    }
                 // Pass image to an ML Kit Vision API
                 // ...
             }
 
-            objectDetector.process(imageProxy)
 
-            imageProxy.close()
         }
     }
 
