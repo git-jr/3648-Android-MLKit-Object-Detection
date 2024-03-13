@@ -90,4 +90,5 @@ dependencies {
     implementation (libs.androidx.camera.extensions)
 
     implementation (libs.objects.detection)
+    implementation (libs.objects.detection.custom)
 }

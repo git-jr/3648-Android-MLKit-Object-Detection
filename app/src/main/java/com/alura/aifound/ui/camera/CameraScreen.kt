@@ -46,6 +46,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import com.google.mlkit.vision.objects.defaults.PredefinedCategory
 
 
 @OptIn(ExperimentalGetImage::class)
@@ -77,6 +78,7 @@ fun CameraScreen(
                             detectedObject?.let {
                                 val boundingBox = detectedObject.boundingBox
                                 val labels = detectedObject.labels.map { it.text }.toString()
+
 
                                 viewModel.setTextMessage("$labels - $boundingBox")
                             }
