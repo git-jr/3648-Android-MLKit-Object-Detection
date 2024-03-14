@@ -87,6 +87,14 @@ fun CameraScreen(
         mutableStateOf(Rect(0f,0f,0f,0f))
     }
 
+    var coordinateX by remember {
+        mutableStateOf(0.dp)
+    }
+
+    var coordinateY by remember {
+        mutableStateOf(0.dp)
+    }
+
     val cameraAnalyzer = remember {
         CameraAnalyzer { imageProxy ->
             Log.d("CameraAnalyzer", "Image received: ${state.imageWidth}x${state.imageHeight}")
@@ -99,6 +107,10 @@ fun CameraScreen(
                         detectedObjects.firstOrNull()?.let { detectedObject ->
                             detectedObject.let {
                                 boundingBox = detectedObject.boundingBox.toComposeRect()
+                                coordinateX = detectedObject.boundingBox.left.dp
+                                coordinateY = detectedObject.boundingBox.top.dp
+
+
                                 val labels = detectedObject.labels.map { it.text }.toString()
 
                                 val label = detectedObject.labels.firstOrNull()?.text.toString()
@@ -142,9 +154,9 @@ fun CameraScreen(
     ) {
         ObjectOverlay(
             boundsObject = boundingBox,
-            nameObject = state.textMessage,
-            coordinateX = ,
-            coordinateY =
+            nameObject = state.textMessage.toString(),
+            coordinateX = coordinateX,
+            coordinateY = coordinateY
         )
 
         Log.d("CameraScreen", "Screen size: ${maxWidth.dpToPx()} x ${maxHeight.dpToPx()}")
