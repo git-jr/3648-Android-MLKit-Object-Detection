@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
@@ -82,6 +83,10 @@ fun CameraScreen(
 
     val objectDetector = remember { ObjectDetection.getClient(customObjectDetectorOptions) }
 
+    var boundingBox by remember {
+        mutableStateOf(Rect(0f,0f,0f,0f))
+    }
+
     val cameraAnalyzer = remember {
         CameraAnalyzer { imageProxy ->
             Log.d("CameraAnalyzer", "Image received: ${state.imageWidth}x${state.imageHeight}")
@@ -91,9 +96,9 @@ fun CameraScreen(
                     InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
                 objectDetector.process(image)
                     .addOnSuccessListener { detectedObjects: MutableList<DetectedObject> ->
-                        detectedObjects.firstOrNull().let { detectedObject ->
-                            detectedObject?.let {
-                                val boundingBox = detectedObject.boundingBox
+                        detectedObjects.firstOrNull()?.let { detectedObject ->
+                            detectedObject.let {
+                                boundingBox = detectedObject.boundingBox.toComposeRect()
                                 val labels = detectedObject.labels.map { it.text }.toString()
 
                                 val label = detectedObject.labels.firstOrNull()?.text.toString()
@@ -135,14 +140,11 @@ fun CameraScreen(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
     ) {
-        Text(
-            text = state.textMessage ?: "Nenhum produto detectado",
-            fontSize = 20.sp,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth()
+        ObjectOverlay(
+            boundsObject = boundingBox,
+            nameObject = state.textMessage,
+            coordinateX = ,
+            coordinateY =
         )
 
         Log.d("CameraScreen", "Screen size: ${maxWidth.dpToPx()} x ${maxHeight.dpToPx()}")
