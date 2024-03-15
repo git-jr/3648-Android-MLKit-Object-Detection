@@ -116,7 +116,6 @@ fun CameraScreen(
                     .addOnSuccessListener { detectedObjects: MutableList<DetectedObject> ->
                         detectedObjects.firstOrNull()?.let { detectedObject ->
                             detectedObject.let {
-                                boundingBox = detectedObject.boundingBox.toComposeRect()
 
                                 val labels = detectedObject.labels.map { it.text }.toString()
 
@@ -128,10 +127,17 @@ fun CameraScreen(
                                 }
 
                                 viewModel.setTextMessage(product.name)
+
+                                boundingBox = if (state.textMessage.isNullOrEmpty()) {
+                                    Rect(0f, 0f, 0f, 0f)
+                                } else {
+                                    detectedObject.boundingBox.toComposeRect()
+                                }
                             }
 
                             imageProxy.close()
                         } ?: run {
+                            boundingBox = Rect(0f, 0f, 0f, 0f)
                             imageProxy.close()
                         }
                     }
