@@ -43,6 +43,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alura.aifound.data.Product
 import com.alura.aifound.extensions.dpToPx
+import com.alura.aifound.extensions.pxToDp
 import com.alura.aifound.sampleData.ProductSample
 import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
@@ -95,6 +96,12 @@ fun CameraScreen(
         mutableStateOf(0.dp)
     }
 
+    var imageSize by remember { mutableStateOf(Size(1, 1)) }
+    var screenSize by remember { mutableStateOf(Size(1, 1)) }
+
+    coordinateX = (boundingBox.topLeft.x / imageSize.width * screenSize.width).pxToDp()
+    coordinateY = (boundingBox.topLeft.y / imageSize.height * screenSize.height).pxToDp()
+
     val cameraAnalyzer = remember {
         CameraAnalyzer { imageProxy ->
             Log.d("CameraAnalyzer", "Image received: ${state.imageWidth}x${state.imageHeight}")
@@ -102,14 +109,14 @@ fun CameraScreen(
             if (mediaImage != null) {
                 val image =
                     InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+                imageSize = Size(image.width, image.height)
+
                 objectDetector.process(image)
                     .addOnSuccessListener { detectedObjects: MutableList<DetectedObject> ->
                         detectedObjects.firstOrNull()?.let { detectedObject ->
                             detectedObject.let {
                                 boundingBox = detectedObject.boundingBox.toComposeRect()
-                                coordinateX = detectedObject.boundingBox.left.dp
-                                coordinateY = detectedObject.boundingBox.top.dp
-
 
                                 val labels = detectedObject.labels.map { it.text }.toString()
 
@@ -152,6 +159,9 @@ fun CameraScreen(
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.2f))
     ) {
+
+        screenSize = Size(maxWidth.dpToPx().toInt(), maxHeight.dpToPx().toInt())
+
         ObjectOverlay(
             boundsObject = boundingBox,
             nameObject = state.textMessage.toString(),
