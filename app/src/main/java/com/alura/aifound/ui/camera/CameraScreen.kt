@@ -85,7 +85,7 @@ fun CameraScreen(
     val objectDetector = remember { ObjectDetection.getClient(customObjectDetectorOptions) }
 
     var boundingBox by remember {
-        mutableStateOf(Rect(0f,0f,0f,0f))
+        mutableStateOf(Rect(0f, 0f, 0f, 0f))
     }
 
     var coordinateX by remember {
@@ -123,7 +123,11 @@ fun CameraScreen(
                                 val label = detectedObject.labels.firstOrNull()?.text.toString()
                                 val product = ProductSample.findProductByName(label)
 
-                                viewModel.setTextMessage("${product.name} - R$${product.price}")
+                                if (product.name != state.textMessage) {
+                                    onNewProductDetected(product)
+                                }
+
+                                viewModel.setTextMessage(product.name)
                             }
 
                             imageProxy.close()
