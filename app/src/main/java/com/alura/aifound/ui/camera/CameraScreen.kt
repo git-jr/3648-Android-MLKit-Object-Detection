@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.alura.aifound.data.Product
 import com.alura.aifound.extensions.dpToPx
 import com.alura.aifound.extensions.pxToDp
+import com.alura.aifound.mlkit.ObjectDetectorProcessor
 import com.alura.aifound.sampleData.ProductSample
 import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
@@ -63,26 +64,8 @@ fun CameraScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current.applicationContext
 
-    val options = ObjectDetectorOptions.Builder()
-        .setDetectorMode(ObjectDetectorOptions.STREAM_MODE)
-        .enableClassification()  // Optional
-        .build()
 
-    val localModel = LocalModel.Builder()
-        .setAssetFilePath("model_products.tflite")
-        // or .setAbsoluteFilePath(absolute file path to model file)
-        // or .setUri(URI to model file)
-        .build()
-
-    val customObjectDetectorOptions =
-        CustomObjectDetectorOptions.Builder(localModel)
-            .setDetectorMode(CustomObjectDetectorOptions.STREAM_MODE)
-            .enableClassification()
-            .setClassificationConfidenceThreshold(0.5f)
-            .setMaxPerObjectLabelCount(3)
-            .build()
-
-    val objectDetector = remember { ObjectDetection.getClient(customObjectDetectorOptions) }
+    val objectDetector = remember { ObjectDetectorProcessor() }
 
     var boundingBox by remember {
         mutableStateOf(Rect(0f, 0f, 0f, 0f))
