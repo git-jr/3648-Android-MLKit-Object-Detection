@@ -93,39 +93,17 @@ fun CameraScreen(
         CameraAnalyzer { imageProxy ->
             Log.d("CameraAnalyzer", "Image received: ${state.imageWidth}x${state.imageHeight}")
 
-            imageSize = Size(imageProxy.width, imageProxy.height)
+            viewModel.setImageSize(imageProxy.width, imageProxy.height)
 
             objectDetector.processImage(
                 imageProxy,
                 onSuccess = { detectedObjects ->
                     detectedObjects.firstOrNull()?.let { detectedObject ->
-                        detectedObject.let {
-                            val label = detectedObject.labels.firstOrNull()?.text.toString()
-                            val product = ProductSample.findProductByName(label)
-
-                            if (product.name != state.textMessage) {
-                                onNewProductDetected(product)
-                            }
-
-                            viewModel.setTextMessage(product.name)
-
-                            boundingBox = if (state.textMessage.isNullOrEmpty()) {
-                                Rect(0f, 0f, 0f, 0f)
-                            } else {
-                                detectedObject.boundingBox.toComposeRect()
-                            }
-                        }
-
-                        imageProxy.close()
+                        viewModel.setObjectDetected(detectedObject)
                     } ?: run {
-                        boundingBox = Rect(0f, 0f, 0f, 0f)
-                        imageProxy.close()
+                        viewModel.resetDetectedProduct()
                     }
-                },
-                onFailure = {
-                    imageProxy.close()
                 }
-
             )
         }
     }
@@ -151,14 +129,16 @@ fun CameraScreen(
             .background(Color.Black.copy(alpha = 0.2f))
     ) {
 
-        screenSize = Size(maxWidth.dpToPx().toInt(), maxHeight.dpToPx().toInt())
+        viewModel.setScreenSize(maxWidth.dpToPx().toInt(), maxHeight.dpToPx().toInt())
 
-        ObjectOverlay(
-            boundsObject = boundingBox,
-            nameObject = state.textMessage.toString(),
-            coordinateX = coordinateX,
-            coordinateY = coordinateY
-        )
+        state.detectedProduct?.let {
+            ObjectOverlay(
+                boundsObject = it.boundingBox,
+                nameObject = it.product.name,
+                coordinateX = it.coordinateX.pxToDp(),
+                coordinateY = it.coordinateY.pxToDp()
+            )
+        }
 
         Log.d("CameraScreen", "Screen size: ${maxWidth.dpToPx()} x ${maxHeight.dpToPx()}")
     }
