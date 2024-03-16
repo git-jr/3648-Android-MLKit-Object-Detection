@@ -65,7 +65,11 @@ fun CameraScreen(
     val context = LocalContext.current.applicationContext
 
 
-    val objectDetector = remember { ObjectDetectorProcessor() }
+    val objectDetector = remember {
+        ObjectDetectorProcessor().apply {
+            setCustomModel("model_products")
+        }
+    }
 
     var boundingBox by remember {
         mutableStateOf(Rect(0f, 0f, 0f, 0f))
@@ -88,51 +92,45 @@ fun CameraScreen(
     val cameraAnalyzer = remember {
         CameraAnalyzer { imageProxy ->
             Log.d("CameraAnalyzer", "Image received: ${state.imageWidth}x${state.imageHeight}")
-            val mediaImage = imageProxy.image
-            if (mediaImage != null) {
-                val image =
-                    InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
-                imageSize = Size(image.width, image.height)
+            imageSize = Size(imageProxy.width, imageProxy.height)
 
-                objectDetector.process(image)
-                    .addOnSuccessListener { detectedObjects: MutableList<DetectedObject> ->
-                        detectedObjects.firstOrNull()?.let { detectedObject ->
-                            detectedObject.let {
+            objectDetector.processImage(
+                imageProxy,
+                onSuccess = { detectedObjects ->
+                    detectedObjects.firstOrNull()?.let { detectedObject ->
+                        detectedObject.let {
+                            val label = detectedObject.labels.firstOrNull()?.text.toString()
+                            val product = ProductSample.findProductByName(label)
 
-                                val labels = detectedObject.labels.map { it.text }.toString()
-
-                                val label = detectedObject.labels.firstOrNull()?.text.toString()
-                                val product = ProductSample.findProductByName(label)
-
-                                if (product.name != state.textMessage) {
-                                    onNewProductDetected(product)
-                                }
-
-                                viewModel.setTextMessage(product.name)
-
-                                boundingBox = if (state.textMessage.isNullOrEmpty()) {
-                                    Rect(0f, 0f, 0f, 0f)
-                                } else {
-                                    detectedObject.boundingBox.toComposeRect()
-                                }
+                            if (product.name != state.textMessage) {
+                                onNewProductDetected(product)
                             }
 
-                            imageProxy.close()
-                        } ?: run {
-                            boundingBox = Rect(0f, 0f, 0f, 0f)
-                            imageProxy.close()
+                            viewModel.setTextMessage(product.name)
+
+                            boundingBox = if (state.textMessage.isNullOrEmpty()) {
+                                Rect(0f, 0f, 0f, 0f)
+                            } else {
+                                detectedObject.boundingBox.toComposeRect()
+                            }
                         }
+
+                        imageProxy.close()
+                    } ?: run {
+                        boundingBox = Rect(0f, 0f, 0f, 0f)
+                        imageProxy.close()
                     }
-                // Pass image to an ML Kit Vision API
-                // ...
-            }
+                },
+                onFailure = {
+                    imageProxy.close()
+                }
 
-
+            )
         }
     }
 
-    // 1 Camera Controller
+// 1 Camera Controller
     val cameraController = remember {
         LifecycleCameraController(context).apply {
             setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
@@ -143,10 +141,10 @@ fun CameraScreen(
         }
     }
 
-    // 2 Camera Preview
+// 2 Camera Preview
     CameraPreview(cameraController = cameraController)
 
-    // 3 Overlay
+// 3 Overlay
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
