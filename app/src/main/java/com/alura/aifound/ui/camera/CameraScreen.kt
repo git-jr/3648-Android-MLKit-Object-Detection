@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +65,13 @@ fun CameraScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current.applicationContext
 
+    LaunchedEffect(state.detectedProduct) {
+        state.detectedProduct?.let {
+            onNewProductDetected(it.product)
+        } ?: run {
+            onNewProductDetected(Product())
+        }
+    }
 
     val objectDetector = remember {
         ObjectDetectorProcessor().apply {
@@ -71,23 +79,6 @@ fun CameraScreen(
         }
     }
 
-    var boundingBox by remember {
-        mutableStateOf(Rect(0f, 0f, 0f, 0f))
-    }
-
-    var coordinateX by remember {
-        mutableStateOf(0.dp)
-    }
-
-    var coordinateY by remember {
-        mutableStateOf(0.dp)
-    }
-
-    var imageSize by remember { mutableStateOf(Size(1, 1)) }
-    var screenSize by remember { mutableStateOf(Size(1, 1)) }
-
-    coordinateX = (boundingBox.topLeft.x / imageSize.width * screenSize.width).pxToDp()
-    coordinateY = (boundingBox.topLeft.y / imageSize.height * screenSize.height).pxToDp()
 
     val cameraAnalyzer = remember {
         CameraAnalyzer { imageProxy ->
