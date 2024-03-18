@@ -82,8 +82,6 @@ fun CameraScreen(
 
     val cameraAnalyzer = remember {
         CameraAnalyzer { imageProxy ->
-            Log.d("CameraAnalyzer", "Image received: ${state.imageWidth}x${state.imageHeight}")
-
             viewModel.setImageSize(imageProxy.width, imageProxy.height)
 
             objectDetector.processImage(
